@@ -46,24 +46,29 @@ router.get('/',
 
 router.get('/handle/:handle', (req, res) => {
   const errors = {};
-  const user = {};
+  var current_profile = {};
 
   Profile.findOne({ handle: req.params.handle })
+  .populate('user', ['name', 'avatar'])
     .then(profile => {
       if (!profile) {
         errors.noprofile = 'There is no profile for this user';
         res.status(404).json(errors);
       }
-      user.profile  = profile;
+      current_profile = profile;
+      // res.json(profile);
+      Post.findOne({user: current_profile.user._id})
+      .then(posts => {
+        if (posts){
+          current_profile.posts = posts;
+          res.json(current_profile);
+        }        
     })
+        .catch(err => res.status(404).json(err));
+        })
     .catch(err => res.status(404).json(err));
 
-    Post.findOne({user: req.user.id})
-      .then(posts => {
-        if (posts){user.posts = posts;}
-        res.json(user);
-    })
-      .catch(err => res.status(404).json(err));
+    
 
 });
 
@@ -73,24 +78,24 @@ router.get('/handle/:handle', (req, res) => {
 
 router.get('/user/:user_id', (req, res) => {
   const errors = {};
-  const user = {};
 
-  Profile.findOne({ handle: req.params.handle })
+  Profile.findOne({user: req.params.user_id })
     .then(profile => {
       if (!profile) {
         errors.noprofile = 'There is no profile for this user';
         res.status(404).json(errors);
       }
-      user.profile  = profile;
-    })
-    .catch(err => res.status(404).json(err));
-
-    Post.findOne({user: req.user.id})
+      current = Object.assign({}, profile);   
+      // res.json(profile);
+      Post.findOne({user:profile.user._id})
       .then(posts => {
-        if (posts){user.posts = posts;}
-        res.json(user);
+        if (posts){current.posts = posts;}
+        res.json(current);
     })
       .catch(err => res.status(404).json(err));
+    })
+
+    .catch(err => res.status(404).json(err));
 });
 
 
@@ -102,28 +107,25 @@ router.post(
   '/follow/:user_id',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
-    Profile.findbyId(req.params.id)
+    Profile.findOne({user: req.user.id})
+    .then(user => {
+      Profile.findOne({user: req.params.user_id})
         .then(profile => {
           if (profile.followers.filter(follow => follow.user.toString() === req.user.id).length > 0) {
-            return res
-              .status(400)
-              .json({ alreadyliked: 'User already following this Profile' });
+            return res.status(400).json({ alreadyliked: 'User already following this Profile' });
             }
-
-          // Add user id to likes array
-          profile.followers.unshift({ user: req.user.id });
-          profile.save().then(profile=> res.json(profile));
-          Profile.findbyId(req.user.id)
-        .then(myprofile => {
-          myprofile.following.unshift({ user: req.params.id });
-          myprofile.save().then(profile=> res.json(profile));
-
-        }).catch(err => res.status(404).json({ myprofilenotfound: 'No profile found'}))
+          else {// Add user id to likes array
+          profile.followers.unshift({user: req.user.id });
+          // console.log(req.user.id)
+          profile.save();
+          
+          user.following.unshift({ user: req.params.user_id });
+          user.save().then(user=> res.json(user));
+          }
+        }).catch(err => res.status(404).json({ myprofilenotfound: 'No profile found1'}))
       })
-
-        .catch(err => res.status(404).json({ profilenotfound: 'No profile found' }));
+        .catch(err => res.status(404).json({ profilenotfound: 'No profile found2' }));
     });
-  
 
 
 // @route   POST api/posts/unfollow/:user_id
@@ -133,33 +135,28 @@ router.post(
   '/unfollow/:user_id',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
-    Profile.findbyId(req.params.id).then(profile => {
-          if (
-            profile.followers.filter(follow => follow.user.toString() === req.user.id)
-              .length === 0
-          ) {
-            return res
-              .status(400)
-              .json({ notfollowed: 'You are not following this Profile' });
+    Profile.findOne({user: req.params.user_id}).then(profile => {
+          if (profile.followers.filter(follow => follow.user.toString() === req.user.id).length === 0) {
+            return res.status(400).json({ notfollowed: 'You are not following this Profile' });}
+          else {
+            // Get remove index
+            // console.log(profile.followers)
+            const removeIndex = profile.followers.map(item => item.user.toString()).indexOf(req.user.id);
+            // Splice out of array
+            profile.followers.splice(removeIndex, 1);
+            // Save
+            profile.save();
+            // console.log(profile.followers)
+
+            Profile.findOne({user: req.user.id})
+              .then(myprofile => {
+                const removeIndex = myprofile.following.map(item => item.user.toString()).indexOf(req.params.user_id);
+                myprofile.following.splice(removeIndex, 1);
+                myprofile.save().then(myprofile=> res.json(myprofile));
+              })
+              .catch(err => res.status(404).json({ myprofilenotfound: 'No profile found'}))
           }
-
-          // Get remove index
-          const removeIndex = profile.followers
-            .map(item => item.user.toString())
-            .indexOf(req.user.id);
-
-          // Splice out of array
-          profile.followers.splice(removeIndex, 1);
-
-          // Save
-          profile.save().then(profile => res.json(profile));
-          Profile.findbyId(req.user.id)
-        .then(myprofile => {
-          const removeIndex = myprofile.following.map(item => item.user.toString()).indexOf(req.params.id);
-          myprofile.following.splice(removeIndex, 1);
-          myprofile.save().then(profile=> res.json(profile));
-        })
-        .catch(err => res.status(404).json({ myprofilenotfound: 'No profile found'}))
+          
       })
         .catch(err => res.status(404).json({ profilenotfound: 'No profile found' }));
     });

@@ -1,21 +1,20 @@
 const express = require('express');
 const router = express.Router();
-
-// Load user model
-const User = require('../../models/User')
-
 const gravatar = require('gravatar');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const keys = require('../../config/keys');
 const passport = require('passport');
 
+// Load user model
+const User = require('../../models/User')
 // @route POST api/users/register
 // @desc Register user
 // @access public
 
 // Load input validation
 const  validateRegisterInput = require('../../validation/register');
+const  validateLoginInput = require('../../validation/login');
 
 router.post('/register', (req, res)=> {
 
