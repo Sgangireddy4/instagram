@@ -4,8 +4,6 @@ import { Link, withRouter } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TextFieldGroup from '../common/TextFieldGroup';
 import TextAreaFieldGroup from '../common/TextAreaFieldGroup';
-import InputGroup from '../common/InputGroup';
-import SelectListGroup from '../common/SelectListGroup';
 import { createProfile, getCurrentProfile } from '../../actions/profileActions';
 import isEmpty from '../../validation/is-empty';
 
@@ -13,14 +11,10 @@ class CreateProfile extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      displaySocialInputs: false,
       handle: '',
       location: '',
-      status: '',
-      hobbies: [],
+      hobbies: '',
       bio: '',
-      followers: [{}],
-      following: [{}],
       errors: {}
     };
 
@@ -40,13 +34,10 @@ class CreateProfile extends Component {
     if (nextProps.profile.profile) {
       const profile = nextProps.profile.profile;
 
-      // Bring hobbies array back to CSV
-      const hobbiesCSV = profile.hobbies.join(',');
-
       // If profile field doesnt exist, make empty string
       profile.location = !isEmpty(profile.location) ? profile.location : '';
       profile.bio = !isEmpty(profile.bio) ? profile.bio : '';
-      profile.hobbies = !isEmpty(profile.hobbies) ? profile.hobbies : [];
+      profile.hobbies = !isEmpty(profile.hobbies) ? profile.hobbies : '';
       profile.followers = !isEmpty(profile.followers) ? profile.followers : [{}];
       profile.following = !isEmpty(profile.following) ? profile.following : [{}];
     
@@ -54,10 +45,8 @@ class CreateProfile extends Component {
       this.setState({
         handle: profile.handle,
         location: profile.location,
-        hobbies: hobbiesCSV,
-        bio: profile.bio,
-        followers: profile.followers,
-        following: profile.following
+        hobbies: profile.hobbies,
+        bio: profile.bio
       });
     }
   }
@@ -69,9 +58,7 @@ class CreateProfile extends Component {
       handle: this.state.handle,
       location: this.state.location,
       hobbies: this.state.hobbies,
-      bio: this.state.bio,
-      followers: this.state.followers,
-      following: this.state.following,
+      bio: this.state.bio
     };
 
     this.props.createProfile(profileData, this.props.history);

@@ -4,8 +4,6 @@ import { withRouter } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TextFieldGroup from '../common/TextFieldGroup';
 import TextAreaFieldGroup from '../common/TextAreaFieldGroup';
-import InputGroup from '../common/InputGroup';
-import SelectListGroup from '../common/SelectListGroup';
 import { createProfile } from '../../actions/profileActions';
 
 class CreateProfile extends Component {
@@ -14,10 +12,8 @@ class CreateProfile extends Component {
     this.state = {
       handle: '',
       location: '',
-      hobbies: [],
+      hobbies: '',
       bio: '',
-      followers: [{}],
-      following: [{}],
       errors: {}
     };
 
@@ -33,16 +29,13 @@ class CreateProfile extends Component {
 
   onSubmit(e) {
     e.preventDefault();
-
     const profileData = {
       handle: this.state.handle,
       location: this.state.location,
-      hobbies: this.state.skills,
-      bio: this.state.bio,
-      followers: this.state.followers,
-      following: this.state.following
+      hobbies: this.state.hobbies,
+      bio: this.state.bio
     };
-
+    // console.log(profileData)
     this.props.createProfile(profileData, this.props.history);
   }
 
@@ -51,7 +44,7 @@ class CreateProfile extends Component {
   }
 
   render() {
-    const { errors} = this.state;
+    const errors = this.state.errors;
 
     return (
       <div className="create-profile">
@@ -96,6 +89,11 @@ class CreateProfile extends Component {
                   onChange={this.onChange}
                   error={errors.bio}
                   info="Tell us a little about yourself"
+                />
+                <input
+                  type="submit"
+                  value="Submit"
+                  className="btn btn-info btn-block mt-4"
                 />
               </form>
             </div>

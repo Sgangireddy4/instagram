@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import TextAreaFieldGroup from '../common/TextAreaFieldGroup';
 import { addPost } from '../../actions/postActions';
-import { timingSafeEqual } from 'crypto';
 
 class PostForm extends Component {
   constructor(props) {
